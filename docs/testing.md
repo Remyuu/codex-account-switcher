@@ -24,11 +24,25 @@ Require the `Test run with ... tests ... passed` summary before treating the sui
 
 ## 2. Unit tests
 
+### macOS account ordering
+
+Drag the handle beside an account to another row on either the home or Manage Accounts page. Releasing moves the account to the destination position and saves the existing registry array. Both pages and subsequent launches use that order. Sorting is unavailable during account operations or update installation. The gesture stays inside the list and uses the row height to determine the destination.
+
+`AccountOrderTests` covers moves in both directions, order after restarting, invalid and redundant moves, and failed saves. It also verifies that sorting preserves the active account, credential bytes and cached usage. The controller drains any pending usage refresh before applying the new order, so an older registry snapshot cannot overwrite it. Local Swift Testing reports 125 tests in 17 suites passed, with the same environment-gated skips as the existing suite.
+
+An isolated native window hosting the production views with eight synthetic accounts verified upward and downward dragging on the home page, dragging on Manage Accounts, and the saved order after quitting and reopening the fixture. Real account credentials and the menu-bar host were not exercised by this fixture.
+
 ### macOS account popover sizing (v0.1.18)
 
 `MenuBarPopoverTests` measures the production SwiftUI view with 0, 1, 2, 3, 4, and 20 saved accounts, with five-hour usage both hidden and shown. The initial zero-height proposal and the sizes left by account management and settings must yield the same home height. One through three accounts increase the height; four and twenty retain the three-account viewport.
 
 The pre-fix zero-height probe returned only 84 points, leaving the forecast and footer visible while collapsing the accounts. Local interaction with the production view in an isolated SwiftUI window verified that three rows remain visible, scrolling reaches accounts 4–6, and returning from both subpages restores the original home height. This fixture uses synthetic accounts and does not switch real Codex credentials.
+
+The macOS popover now has a bottom resize grip. Drag it vertically to change the height; double-click to restore automatic sizing. The selected height is stored in local preferences and reused across pages and launches. Automatic sizing retains the three-account viewport. After resizing, the account list fills the available height while the forecast and footer remain visible; subpages scroll inside the selected height. Manual sizing has a 220-point minimum and is capped at the available screen height (a smaller screen takes precedence). The grip also supports up/down arrow keys when focused and accessibility increment/decrement actions.
+
+The sizing tests use isolated preference domains. They cover reopening with saved heights for 0, 1, and 20 accounts, layout under zero-height and subsequent size proposals, oversized saved preferences, native resize limits, and double-click reset. Existing automatic-size checks run independently of the user's saved height.
+
+Local validation on October 28, 2026 passed the Swift Testing suite (122 tests reported, with environment-gated transport and fish checks skipped), CoreChecks, and a release build. An isolated native window hosting the production view with eight synthetic accounts verified growing from 390 to 490 points, shrinking back to 390, retaining height on the settings page, scrolling, and double-click reset. Drag events use their captured Quartz screen positions to avoid jumps when resizing moves the window before queued events are handled. This interaction evidence applies to the production view in the window harness; the menu-bar host itself was not driven by automation.
 
 ### Active credential refresh and Desktop updates (v0.1.16)
 

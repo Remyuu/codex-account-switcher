@@ -1,3 +1,5 @@
+> Personal fork of [liuzhao1225/codex-account-switcher](https://github.com/liuzhao1225/codex-account-switcher) with adjustable macOS popover height and saved drag-and-drop account ordering. The original project documentation follows.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/account-switcher-logo-white.png">
@@ -102,6 +104,8 @@ Run `codex-account-switcher update` to update, `open` to launch, or `uninstall` 
 | --- | --- |
 | **No-code setup** | Add accounts through the normal browser sign-in flow, with no Terminal commands or config files. |
 | **Native account controls** | Use the macOS menu bar or a Windows window with a system-tray entry point. |
+| **Resizable macOS popover** | Drag the bottom grip to change the height. The app remembers your choice; double-click the grip to restore the default size. |
+| **Drag to reorder accounts on macOS** | Drag the handle beside an account onto another row in the home or Manage Accounts page. Your order is saved automatically. |
 | **Completed Desktop handoff** | Select and confirm an account, then let the app close, switch, verify, and reopen Codex Desktop. |
 | **Local account storage** | Keep saved account data on your computer without an app-owned proxy or cloud account service. |
 | **Usage at a glance** | Check weekly allowance in account rows by default, or enable the exact 300-minute (5-hour) service window and reset time in Settings. The optional row is off by default. Choose whether the menu bar or Windows tray shows the 5-hour or weekly remaining percentage; it defaults to 5-hour usage. |

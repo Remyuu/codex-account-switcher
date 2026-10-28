@@ -7,6 +7,21 @@ struct MenuBarPopover: View {
     @ObservedObject var updater: AppUpdater
     @ObservedObject var tiboForecast: TiboForecastModel
     @State private var page: PopoverPage = .accounts
+    @AppStorage private var preferredHeight: Double
+    @State private var maximumHeight = PopoverSizing.maximumHeight()
+
+    init(model: AppModel, updater: AppUpdater, tiboForecast: TiboForecastModel,
+         defaults: UserDefaults = .standard) {
+        self.model = model
+        self.updater = updater
+        self.tiboForecast = tiboForecast
+        _preferredHeight = AppStorage(wrappedValue: 0, "popoverHeight", store: defaults)
+    }
+
+    private var popoverHeight: CGFloat? {
+        guard preferredHeight.isFinite, preferredHeight > 0 else { return nil }
+        return PopoverSizing.constrainedHeight(CGFloat(preferredHeight), maximum: maximumHeight)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,38 +40,63 @@ struct MenuBarPopover: View {
                 case .accounts:
                     accountPage
                 case .manageAccounts:
-                    ManageAccountsView(model: model) {
-                        page = .accounts
+                    scrollablePage {
+                        ManageAccountsView(model: model) {
+                            page = .accounts
+                        }
+                        .disabled(updater.isInstalling)
                     }
-                    .disabled(updater.isInstalling)
                 case .settings:
-                    SettingsView(model: model, updater: updater) {
-                        page = .accounts
+                    scrollablePage {
+                        SettingsView(model: model, updater: updater) {
+                            page = .accounts
+                        }
                     }
                 case let .confirmSwitch(account):
-                    SwitchConfirmationPage(
-                        model: model,
-                        account: account,
-                        onCancel: {
-                            page = .accounts
-                        },
-                        onConfirm: {
-                            page = .accounts
-                            Task { await model.switchAccount(to: account.id) }
-                        }
-                    )
-                    .disabled(updater.isInstalling)
+                    scrollablePage {
+                        SwitchConfirmationPage(
+                            model: model,
+                            account: account,
+                            onCancel: {
+                                page = .accounts
+                            },
+                            onConfirm: {
+                                page = .accounts
+                                Task { await model.switchAccount(to: account.id) }
+                            }
+                        )
+                        .disabled(updater.isInstalling)
+                    }
                 }
             }
+
+            PopoverResizeHandle(help: model.text("popover_resize_help"), onResize: { height, maximum in
+                maximumHeight = maximum
+                preferredHeight = Double(height)
+            }, onReset: {
+                preferredHeight = 0
+            })
+            .frame(height: 14)
         }
-        .frame(width: 400)
+        .frame(width: 400, height: popoverHeight, alignment: .top)
         .onAppear {
+            maximumHeight = PopoverSizing.maximumHeight(for: NSApp.keyWindow)
             page = model.isAddingAccount ? .manageAccounts : .accounts
             Task { await tiboForecast.refreshIfDue() }
         }
         .task {
             await model.start()
             model.refreshWeeklyUsage()
+        }
+    }
+
+    @ViewBuilder
+    private func scrollablePage<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if popoverHeight != nil {
+            ScrollView { content() }
+                .frame(maxHeight: .infinity)
+        } else {
+            content()
         }
     }
 
@@ -85,6 +125,10 @@ struct MenuBarPopover: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 28)
+                    .frame(maxHeight: popoverHeight == nil ? nil : .infinity)
+            } else if popoverHeight != nil {
+                ScrollView { accountList(model.accounts) }
+                    .frame(maxHeight: .infinity)
             } else {
                 Group {
                     if model.accounts.count <= 3 {
@@ -157,24 +201,26 @@ struct MenuBarPopover: View {
     private func accountList(_ accounts: [AccountProfile]) -> some View {
         VStack(spacing: 8) {
             ForEach(accounts) { account in
-                Button {
-                    if account.id == model.activeAccountID {
-                        NSApp.keyWindow?.close()
-                    } else {
-                        page = .confirmSwitch(account)
+                ReorderableAccountRow(model: model, account: account, isEnabled: !updater.isInstalling) {
+                    Button {
+                        if account.id == model.activeAccountID {
+                            NSApp.keyWindow?.close()
+                        } else {
+                            page = .confirmSwitch(account)
+                        }
+                    } label: {
+                        AccountRow(
+                            account: account,
+                            usageState: model.usageStates[account.id] ?? .idle,
+                            subscription: model.subscriptionSnapshots[account.id],
+                            isActive: account.id == model.activeAccountID,
+                            language: model.settings.language,
+                            showsFiveHourUsage: model.settings.showsFiveHourUsage
+                        )
                     }
-                } label: {
-                    AccountRow(
-                        account: account,
-                        usageState: model.usageStates[account.id] ?? .idle,
-                        subscription: model.subscriptionSnapshots[account.id],
-                        isActive: account.id == model.activeAccountID,
-                        language: model.settings.language,
-                        showsFiveHourUsage: model.settings.showsFiveHourUsage
-                    )
+                    .buttonStyle(.plain)
+                    .disabled(model.isMutating || updater.isInstalling)
                 }
-                .buttonStyle(.plain)
-                .disabled(model.isMutating || updater.isInstalling)
             }
         }
         .padding(8)

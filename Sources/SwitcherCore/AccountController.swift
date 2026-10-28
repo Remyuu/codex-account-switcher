@@ -303,6 +303,23 @@ open class AccountController {
         }
     }
 
+    public func moveAccount(id: UUID, relativeTo targetID: UUID, after: Bool) async {
+        guard !isMutating, !isAddingAccount, id != targetID else { return }
+        let wasRefreshing = usageRefreshTask != nil
+        isMutating = true
+        // Drain any older registry snapshot before publishing the saved order.
+        await cancelUsageRefresh()
+        defer {
+            isMutating = false
+            if wasRefreshing { refreshWeeklyUsage() }
+        }
+        do {
+            apply(try await store.moveAccount(id: id, relativeTo: targetID, after: after))
+        } catch {
+            showError(error)
+        }
+    }
+
     public func setLanguage(_ language: AppLanguage) async {
         settings.language = language
         do {

@@ -1,3 +1,5 @@
+> 本仓库是 [liuzhao1225/codex-account-switcher](https://github.com/liuzhao1225/codex-account-switcher) 的个人 fork，增加了 macOS 弹窗高度调整和可保存的账号拖动排序。以下保留原项目说明。
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/account-switcher-logo-white.png">
@@ -102,6 +104,8 @@ npx @liuzhao1225/codex-account-switcher@latest
 | --- | --- |
 | **无需代码的设置流程** | 通过普通浏览器登录添加账号，无需终端命令或配置文件。 |
 | **原生账号界面** | macOS 使用菜单栏；Windows 使用原生窗口，可从系统托盘重新打开。 |
+| **可调整的 macOS 弹窗高度** | 拖动弹窗底部手柄即可拉高或缩短，自动记住高度；双击手柄恢复默认大小。 |
+| **macOS 账号拖动排序** | 在首页或“管理账号”页，将账号旁的手柄拖到另一行即可排序，顺序自动保存。 |
 | **完整 Desktop 交接** | 选择并确认后，由应用关闭、切换、校验并重新打开 Codex Desktop。 |
 | **本地账号存储** | 账号数据留在本机，不依赖应用自建的代理或云端账号服务。 |
 | **快速查看用量** | 账号列表默认查看每周用量，也可在设置中开启服务端提供的精确 300 分钟（5 小时）窗口与重置时间；该用量行默认关闭。菜单栏或 Windows 托盘可选择显示 5 小时或每周剩余额度，默认显示 5 小时。 |

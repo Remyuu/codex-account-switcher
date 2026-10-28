@@ -60,7 +60,9 @@ struct ManageAccountsView: View {
             } else {
                 VStack(spacing: 2) {
                     ForEach(model.accounts) { account in
-                        managedAccountRow(account)
+                        ReorderableAccountRow(model: model, account: account, spacing: 2) {
+                            managedAccountRow(account)
+                        }
                     }
                 }
                 .padding(5)

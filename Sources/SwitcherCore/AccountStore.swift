@@ -247,6 +247,25 @@ public actor AccountStore: AccountStoring {
         if fileManager.fileExists(atPath: directory.path) { try removeProfileDirectory(directory) }
     }
 
+    /// Reorder the latest registry without changing the selected account or credential files.
+    @discardableResult
+    public func moveAccount(id: UUID, relativeTo targetID: UUID, after: Bool) throws -> AccountRegistry {
+        var current = try loadRegistry()
+        guard let source = current.accounts.firstIndex(where: { $0.id == id }),
+              current.accounts.contains(where: { $0.id == targetID }) else {
+            throw AccountStoreError.profileNotFound
+        }
+        guard id != targetID else { return current }
+        let original = current.accounts
+        let account = current.accounts.remove(at: source)
+        guard let target = current.accounts.firstIndex(where: { $0.id == targetID }) else {
+            throw AccountStoreError.profileNotFound
+        }
+        current.accounts.insert(account, at: target + (after ? 1 : 0))
+        if current.accounts != original { try saveRegistry(current) }
+        return current
+    }
+
     private func registerActiveIdentity(_ identity: AccountIdentity, credential bytes: Data) throws {
         let current = try loadRegistry()
         if let profile = current.accounts.first(where: { identity.matches($0) }) {
